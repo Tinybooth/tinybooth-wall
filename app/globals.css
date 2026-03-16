@@ -1,0 +1,65 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  background-color: #0a0a0a;
+  color: #fafafa;
+  min-height: 100vh;
+}
+
+/* TV display grid animations */
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.photo-tile-enter {
+  animation: fadeInScale 0.6s ease-out forwards;
+}
+
+/* Photo crossfade for multi-photo tiles */
+@keyframes crossfade {
+  0%,
+  40% {
+    opacity: 1;
+  }
+  50%,
+  90% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* TV grid layout */
+.tv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-auto-rows: 280px;
+  gap: 4px;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  padding: 4px;
+}
+
+.tv-grid .span-2-col {
+  grid-column: span 2;
+}
+
+.tv-grid .span-2-row {
+  grid-row: span 2;
+}

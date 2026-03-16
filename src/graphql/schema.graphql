@@ -1,0 +1,34 @@
+scalar DateTime
+
+type Event {
+  id: ID!
+  name: String!
+  slug: String!
+  dateCreated: DateTime!
+  posts: [Post!]!
+}
+
+type Post {
+  id: ID!
+  event: Event!
+  caption: String
+  dateCreated: DateTime!
+  photos: [Photo!]!
+}
+
+type Photo {
+  id: ID!
+  url: String!
+  order: Int!
+  dateCreated: DateTime!
+}
+
+type Query {
+  event(slug: String!): Event
+  posts(eventId: ID!, since: DateTime, limit: Int): [Post!]!
+}
+
+type Mutation {
+  createEvent(name: String!): Event!
+  createPost(eventId: ID!, caption: String, photoUrls: [String!]!): Post!
+}

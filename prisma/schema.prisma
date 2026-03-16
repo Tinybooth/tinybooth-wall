@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  dateCreated DateTime @default(now())
+  posts       Post[]
+
+  @@index([slug])
+}
+
+model Post {
+  id          String   @id @default(cuid())
+  eventId     String
+  event       Event    @relation(fields: [eventId], references: [id])
+  caption     String?
+  dateCreated DateTime @default(now())
+  photos      Photo[]
+
+  @@index([eventId, dateCreated])
+}
+
+model Photo {
+  id          String   @id @default(cuid())
+  postId      String
+  post        Post     @relation(fields: [postId], references: [id])
+  url         String
+  order       Int      @default(0)
+  dateCreated DateTime @default(now())
+
+  @@index([postId])
+}
