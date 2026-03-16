@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Typography } from "antd";
 
 import { PhotoTile } from "./PhotoTile";
@@ -11,6 +11,8 @@ import type { Post } from "@/types";
 
 const { Title, Text } = Typography;
 
+const SWAP_INTERVAL_MS = 5000;
+
 interface PhotoGridProps {
   eventId: string;
   eventName: string;
@@ -19,8 +21,19 @@ interface PhotoGridProps {
 }
 
 /**
+ * Calculate grid dimensions to fill the viewport with square cells.
+ */
+function calcGrid(width: number, height: number): { cols: number; rows: number } {
+  const cellSize = 280;
+  const cols = Math.max(1, Math.round(width / cellSize));
+  const rows = Math.max(1, Math.round(height / cellSize));
+  return { cols, rows };
+}
+
+/**
  * Full-viewport photo grid for the TV display.
- * Polls for new posts every 3 seconds and manages time windowing.
+ * Square base cells; portrait spans 2 rows, landscape spans 2 cols.
+ * Rotates through posts when there are more than fit on screen.
  */
 export function PhotoGrid({
   eventId,
@@ -29,10 +42,58 @@ export function PhotoGrid({
   initialPosts,
 }: PhotoGridProps): React.ReactElement {
   const [posts, setPosts] = useState<Post[]>(initialPosts);
+  const [grid, setGrid] = useState({ cols: 4, rows: 3 });
+  const [visibleIds, setVisibleIds] = useState<string[]>([]);
+  const swapTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (typeof window !== "undefined" ? window.location.origin : "");
   const postUrl = `${baseUrl}/${eventSlug}/post`;
 
+  const capacity = grid.cols * grid.rows;
+
+  // Calculate grid on mount and resize
+  useEffect(() => {
+    const update = (): void => {
+      setGrid(calcGrid(window.innerWidth, window.innerHeight));
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  // Set visible posts when posts change
+  useEffect(() => {
+    if (posts.length === 0) return;
+    setVisibleIds(posts.slice(0, capacity).map((p) => p.id));
+  }, [posts, capacity]);
+
+  // Rotate: swap one visible tile with a queued post
+  useEffect(() => {
+    if (posts.length <= capacity) return;
+
+    if (swapTimerRef.current) clearInterval(swapTimerRef.current);
+
+    swapTimerRef.current = setInterval(() => {
+      setVisibleIds((prev) => {
+        const visibleSet = new Set(prev);
+        const queued = posts.filter((p) => !visibleSet.has(p.id));
+        if (queued.length === 0) return prev;
+
+        const swapIndex = Math.floor(Math.random() * prev.length);
+        const newPost = queued[Math.floor(Math.random() * queued.length)];
+
+        const next = [...prev];
+        next[swapIndex] = newPost.id;
+        return next;
+      });
+    }, SWAP_INTERVAL_MS);
+
+    return () => {
+      if (swapTimerRef.current) clearInterval(swapTimerRef.current);
+    };
+  }, [posts, capacity]);
+
+  // Poll for new posts
   const fetchPosts = useCallback(async (): Promise<void> => {
     try {
       const since =
@@ -51,6 +112,8 @@ export function PhotoGrid({
                 photos {
                   id
                   url
+                  width
+                  height
                   order
                   dateCreated
                 }
@@ -71,6 +134,11 @@ export function PhotoGrid({
   }, [eventId, posts.length]);
 
   usePolling(fetchPosts, 3000);
+
+  const postsById = new Map(posts.map((p) => [p.id, p]));
+  const visiblePosts = visibleIds
+    .map((id) => postsById.get(id))
+    .filter((p): p is Post => p !== undefined);
 
   if (posts.length === 0) {
     return (
@@ -99,8 +167,14 @@ export function PhotoGrid({
 
   return (
     <div style={{ background: "#0a0a0a" }}>
-      <div className="tv-grid">
-        {posts.map((post) => (
+      <div
+        className="tv-grid"
+        style={{
+          gridTemplateColumns: `repeat(${grid.cols}, 1fr)`,
+          gridTemplateRows: `repeat(${grid.rows}, 1fr)`,
+        }}
+      >
+        {visiblePosts.map((post) => (
           <PhotoTile key={post.id} post={post} />
         ))}
       </div>

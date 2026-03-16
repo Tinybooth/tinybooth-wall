@@ -37,9 +37,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const urls = await savePhotos(files, eventSlug);
+    const photos = await savePhotos(files, eventSlug);
 
-    return NextResponse.json({ urls });
+    return NextResponse.json({ photos });
   } catch (error) {
     console.error("Upload error:", error);
     return NextResponse.json(

@@ -70,16 +70,16 @@ export function PostFlow({
         throw new Error("Upload failed");
       }
 
-      const { urls } = await uploadResponse.json();
+      const { photos } = await uploadResponse.json();
 
-      // Step 2: Create post with photo URLs
+      // Step 2: Create post with photo data (URLs + dimensions)
       const response = await fetch("/api/graphql", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           query: `
-            mutation CreatePost($eventId: ID!, $caption: String, $photoUrls: [String!]!) {
-              createPost(eventId: $eventId, caption: $caption, photoUrls: $photoUrls) {
+            mutation CreatePost($eventId: ID!, $caption: String, $photos: [PhotoInput!]!) {
+              createPost(eventId: $eventId, caption: $caption, photos: $photos) {
                 id
               }
             }
@@ -87,7 +87,7 @@ export function PostFlow({
           variables: {
             eventId,
             caption: caption || null,
-            photoUrls: urls,
+            photos,
           },
         }),
       });

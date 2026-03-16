@@ -17,6 +17,8 @@ export interface Post {
 export interface Photo {
   id: string;
   url: string;
+  width: number;
+  height: number;
   order: number;
   dateCreated: string;
 }

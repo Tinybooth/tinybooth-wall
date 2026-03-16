@@ -43,3 +43,6 @@ public/uploads/*
 
 # generated
 src/graphql/__generated__/
+
+# duh
+.env

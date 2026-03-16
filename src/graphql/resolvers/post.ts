@@ -30,7 +30,11 @@ export const postResolvers = {
   Mutation: {
     createPost: async (
       _parent: unknown,
-      args: { eventId: string; caption?: string; photoUrls: string[] },
+      args: {
+        eventId: string;
+        caption?: string;
+        photos: { url: string; width: number; height: number }[];
+      },
       context: GraphQLContext
     ) => {
       return context.db.post.create({
@@ -38,8 +42,10 @@ export const postResolvers = {
           eventId: args.eventId,
           caption: args.caption ?? null,
           photos: {
-            create: args.photoUrls.map((url, index) => ({
-              url,
+            create: args.photos.map((photo, index) => ({
+              url: photo.url,
+              width: photo.width,
+              height: photo.height,
               order: index,
             })),
           },

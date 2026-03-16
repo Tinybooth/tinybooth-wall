@@ -34,6 +34,8 @@ model Photo {
   postId      String
   post        Post     @relation(fields: [postId], references: [id])
   url         String
+  width       Int      @default(0)
+  height      Int      @default(0)
   order       Int      @default(0)
   dateCreated DateTime @default(now())
 

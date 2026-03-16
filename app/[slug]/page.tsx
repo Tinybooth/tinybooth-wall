@@ -46,6 +46,8 @@ export default async function TVPage({
       (ph): Photo => ({
         id: ph.id,
         url: ph.url,
+        width: ph.width,
+        height: ph.height,
         order: ph.order,
         dateCreated: ph.dateCreated.toISOString(),
       })

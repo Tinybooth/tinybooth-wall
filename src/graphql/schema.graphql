@@ -19,8 +19,16 @@ type Post {
 type Photo {
   id: ID!
   url: String!
+  width: Int!
+  height: Int!
   order: Int!
   dateCreated: DateTime!
+}
+
+input PhotoInput {
+  url: String!
+  width: Int!
+  height: Int!
 }
 
 type Query {
@@ -30,5 +38,5 @@ type Query {
 
 type Mutation {
   createEvent(name: String!): Event!
-  createPost(eventId: ID!, caption: String, photoUrls: [String!]!): Post!
+  createPost(eventId: ID!, caption: String, photos: [PhotoInput!]!): Post!
 }
