@@ -1,3 +1,4 @@
+import { sanitizeCaption, cleanProfanity } from "@/lib/utils";
 import type { GraphQLContext } from "../context";
 
 /**
@@ -37,10 +38,14 @@ export const postResolvers = {
       },
       context: GraphQLContext
     ) => {
+      const caption = args.caption
+        ? cleanProfanity(sanitizeCaption(args.caption))
+        : null;
+
       return context.db.post.create({
         data: {
           eventId: args.eventId,
-          caption: args.caption ?? null,
+          caption,
           photos: {
             create: args.photos.map((photo, index) => ({
               url: photo.url,

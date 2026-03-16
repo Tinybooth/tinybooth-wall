@@ -11,6 +11,8 @@ body {
   background-color: #0a0a0a;
   color: #fafafa;
   min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
 }
 
 /* TV display grid animations */
