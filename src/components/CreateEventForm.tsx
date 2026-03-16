@@ -61,7 +61,7 @@ export function CreateEventForm(): React.ReactElement {
     }
   };
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (typeof window !== "undefined" ? window.location.origin : "");
 
   if (createdEvent) {
     const tvUrl = `${baseUrl}/${createdEvent.slug}`;
