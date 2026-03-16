@@ -31,7 +31,7 @@ export function WelcomeScreen({
       }}
     >
       <Space direction="vertical" size="large" align="center">
-        <CameraOutlined style={{ fontSize: 64, color: "#7c3aed" }} />
+        <CameraOutlined style={{ fontSize: 64, color: "#922B21" }} />
         <Title level={2} style={{ margin: 0, color: "#fafafa" }}>
           {eventName}
         </Title>
