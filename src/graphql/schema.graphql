@@ -34,9 +34,15 @@ input PhotoInput {
 type Query {
   event(slug: String!): Event
   posts(eventId: ID!, since: DateTime, limit: Int): [Post!]!
+  adminEventById(id: ID!): Event
+  adminEvents: [Event!]!
 }
 
 type Mutation {
   createEvent(name: String!): Event!
   createPost(eventId: ID!, caption: String, photos: [PhotoInput!]!): Post!
+  adminUpdateEvent(id: ID!, name: String!): Event!
+  adminDeleteEvent(id: ID!): Event!
+  adminUpdatePost(id: ID!, caption: String): Post!
+  adminDeletePost(id: ID!): Post!
 }

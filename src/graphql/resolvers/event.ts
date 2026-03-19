@@ -16,6 +16,26 @@ export const eventResolvers = {
         include: { posts: { include: { photos: true } } },
       });
     },
+    adminEventById: async (
+      _parent: unknown,
+      args: { id: string },
+      context: GraphQLContext
+    ) => {
+      return context.db.event.findUnique({
+        where: { id: args.id },
+        include: { posts: { include: { photos: true } } },
+      });
+    },
+    adminEvents: async (
+      _parent: unknown,
+      _args: unknown,
+      context: GraphQLContext
+    ) => {
+      return context.db.event.findMany({
+        include: { posts: { include: { photos: true } } },
+        orderBy: { dateCreated: "desc" },
+      });
+    },
   },
 
   Mutation: {
@@ -32,6 +52,34 @@ export const eventResolvers = {
         },
         include: { posts: true },
       });
+    },
+    adminUpdateEvent: async (
+      _parent: unknown,
+      args: { id: string; name: string },
+      context: GraphQLContext
+    ) => {
+      return context.db.event.update({
+        where: { id: args.id },
+        data: { name: args.name },
+        include: { posts: { include: { photos: true } } },
+      });
+    },
+    adminDeleteEvent: async (
+      _parent: unknown,
+      args: { id: string },
+      context: GraphQLContext
+    ) => {
+      const event = await context.db.event.findUnique({
+        where: { id: args.id },
+        include: { posts: { include: { photos: true } } },
+      });
+
+      const postIds = event?.posts.map((p) => p.id) ?? [];
+      await context.db.photo.deleteMany({ where: { postId: { in: postIds } } });
+      await context.db.post.deleteMany({ where: { eventId: args.id } });
+      await context.db.event.delete({ where: { id: args.id } });
+
+      return event;
     },
   },
 

@@ -13,7 +13,9 @@ export const resolvers = {
     ...eventResolvers.Mutation,
     ...postResolvers.Mutation,
   },
-  Event: eventResolvers.Event,
+  Event: {
+    ...eventResolvers.Event,
+  },
   Post: postResolvers.Post,
   DateTime: {
     __serialize(value: unknown): string | null {

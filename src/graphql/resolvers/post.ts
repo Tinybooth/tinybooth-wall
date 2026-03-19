@@ -58,6 +58,36 @@ export const postResolvers = {
         include: { photos: true },
       });
     },
+    adminUpdatePost: async (
+      _parent: unknown,
+      args: { id: string; caption?: string },
+      context: GraphQLContext
+    ) => {
+      const caption = args.caption
+        ? cleanProfanity(sanitizeCaption(args.caption))
+        : null;
+
+      return context.db.post.update({
+        where: { id: args.id },
+        data: { caption },
+        include: { photos: true },
+      });
+    },
+    adminDeletePost: async (
+      _parent: unknown,
+      args: { id: string },
+      context: GraphQLContext
+    ) => {
+      const post = await context.db.post.findUnique({
+        where: { id: args.id },
+        include: { photos: true },
+      });
+
+      await context.db.photo.deleteMany({ where: { postId: args.id } });
+      await context.db.post.delete({ where: { id: args.id } });
+
+      return post;
+    },
   },
 
   Post: {
