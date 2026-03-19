@@ -46,3 +46,4 @@ src/graphql/__generated__/
 
 # duh
 .env
+.claude
