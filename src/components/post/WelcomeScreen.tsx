@@ -3,11 +3,14 @@
 import { Button, Typography, Space } from "antd";
 import { CameraOutlined } from "@ant-design/icons";
 
+import type { EventTheme } from "@/types";
+
 const { Title, Text } = Typography;
 
 interface WelcomeScreenProps {
   eventName: string;
   onConfirm: () => void;
+  theme: EventTheme;
 }
 
 /**
@@ -17,6 +20,7 @@ interface WelcomeScreenProps {
 export function WelcomeScreen({
   eventName,
   onConfirm,
+  theme,
 }: WelcomeScreenProps): React.ReactElement {
   return (
     <div
@@ -28,21 +32,29 @@ export function WelcomeScreen({
         justifyContent: "center",
         padding: 32,
         textAlign: "center",
+        background: theme.backgroundColor,
       }}
     >
       <Space direction="vertical" size="large" align="center">
-        <CameraOutlined style={{ fontSize: 64, color: "#922B21" }} />
-        <Title level={2} style={{ margin: 0, color: "#fafafa" }}>
+        <CameraOutlined style={{ fontSize: 64, color: theme.buttonColor }} />
+        <Title level={2} style={{ margin: 0, color: theme.textColor }}>
           {eventName}
         </Title>
-        <Text style={{ fontSize: 16, color: "#aaa", maxWidth: 300 }}>
+        <Text style={{ fontSize: 16, color: theme.subtextColor, maxWidth: 300 }}>
           Share your photos and see them appear live on the big screen!
         </Text>
         <Button
-          type="primary"
           size="large"
           onClick={onConfirm}
-          style={{ marginTop: 16, height: 56, fontSize: 18, paddingInline: 48 }}
+          style={{
+            marginTop: 16,
+            height: 56,
+            fontSize: 18,
+            paddingInline: 48,
+            backgroundColor: theme.buttonColor,
+            borderColor: theme.buttonColor,
+            color: "#fff",
+          }}
         >
           Let&apos;s go!
         </Button>

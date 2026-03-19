@@ -4,7 +4,7 @@ import { AdminEventDetail } from "@/components/admin/AdminEventDetail";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Event Admin - Crispy Waffle",
+  title: "Event Admin - TinyWall",
 };
 
 interface AdminEventPageProps {

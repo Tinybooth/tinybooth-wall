@@ -1,10 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Input, Typography, Card, Space, message } from "antd";
+import {
+  Button,
+  Input,
+  InputNumber,
+  Typography,
+  Card,
+  Space,
+  Switch,
+  ColorPicker,
+  Slider,
+  Collapse,
+  message,
+} from "antd";
+import { SettingOutlined } from "@ant-design/icons";
 import { QRCodeSVG } from "qrcode.react";
 
-import type { Event } from "@/types";
+import { DEFAULT_EVENT_SETTINGS } from "@/types";
+import type { Event, EventSettings } from "@/types";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -15,6 +29,7 @@ export function CreateEventForm(): React.ReactElement {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [createdEvent, setCreatedEvent] = useState<Event | null>(null);
+  const [settings, setSettings] = useState<EventSettings>(DEFAULT_EVENT_SETTINGS);
 
   const handleCreate = async (): Promise<void> => {
     if (!name.trim()) {
@@ -34,6 +49,20 @@ export function CreateEventForm(): React.ReactElement {
                 id
                 name
                 slug
+                settings {
+                  theme {
+                    buttonColor
+                    secondaryButtonColor
+                    textColor
+                    subtextColor
+                    backgroundColor
+                  }
+                  allowChooseFromLibrary
+                  allowVideo
+                  allowCaptions
+                  maxPhotosPerPost
+                  slideShowSpeed
+                }
                 dateCreated
                 posts {
                   id
@@ -50,8 +79,32 @@ export function CreateEventForm(): React.ReactElement {
         throw new Error(result.errors[0].message);
       }
 
-      setCreatedEvent(result.data.createEvent);
+      const created = result.data.createEvent;
+
+      // Save settings immediately after creation
+      const settingsResponse = await fetch("/api/graphql", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query: `
+            mutation AdminUpdateEventSettings($id: ID!, $settings: EventSettingsInput!) {
+              adminUpdateEventSettings(id: $id, settings: $settings) {
+                id
+              }
+            }
+          `,
+          variables: { id: created.id, settings },
+        }),
+      });
+
+      const settingsResult = await settingsResponse.json();
+      if (settingsResult.errors) {
+        console.error("Failed to save settings:", settingsResult.errors);
+      }
+
+      setCreatedEvent(created);
       setName("");
+      setSettings(DEFAULT_EVENT_SETTINGS);
       message.success("Event created!");
     } catch (error) {
       console.error("Failed to create event:", error);
@@ -151,6 +204,127 @@ export function CreateEventForm(): React.ReactElement {
           onPressEnter={handleCreate}
           maxLength={100}
         />
+
+        <Collapse
+          ghost
+          items={[
+            {
+              key: "settings",
+              label: (
+                <Space>
+                  <SettingOutlined />
+                  <Text type="secondary">Event Settings</Text>
+                </Space>
+              ),
+              children: (
+                <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+                  {/* Theme */}
+                  <div>
+                    <Text strong style={{ display: "block", marginBottom: 8 }}>Theme</Text>
+                    <Space size="large" wrap>
+                      <div>
+                        <Text type="secondary" style={{ display: "block", marginBottom: 4, fontSize: 12 }}>Button</Text>
+                        <ColorPicker
+                          value={settings.theme.buttonColor}
+                          onChange={(_, hex) =>
+                            setSettings((s) => ({ ...s, theme: { ...s.theme, buttonColor: hex } }))
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Text type="secondary" style={{ display: "block", marginBottom: 4, fontSize: 12 }}>Secondary</Text>
+                        <ColorPicker
+                          value={settings.theme.secondaryButtonColor}
+                          onChange={(_, hex) =>
+                            setSettings((s) => ({ ...s, theme: { ...s.theme, secondaryButtonColor: hex } }))
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Text type="secondary" style={{ display: "block", marginBottom: 4, fontSize: 12 }}>Text</Text>
+                        <ColorPicker
+                          value={settings.theme.textColor}
+                          onChange={(_, hex) =>
+                            setSettings((s) => ({ ...s, theme: { ...s.theme, textColor: hex } }))
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Text type="secondary" style={{ display: "block", marginBottom: 4, fontSize: 12 }}>Subtext</Text>
+                        <ColorPicker
+                          value={settings.theme.subtextColor}
+                          onChange={(_, hex) =>
+                            setSettings((s) => ({ ...s, theme: { ...s.theme, subtextColor: hex } }))
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Text type="secondary" style={{ display: "block", marginBottom: 4, fontSize: 12 }}>Background</Text>
+                        <ColorPicker
+                          value={settings.theme.backgroundColor}
+                          onChange={(_, hex) =>
+                            setSettings((s) => ({ ...s, theme: { ...s.theme, backgroundColor: hex } }))
+                          }
+                        />
+                      </div>
+                    </Space>
+                  </div>
+
+                  {/* Toggles */}
+                  <Space size="large" wrap>
+                    <div>
+                      <Text type="secondary" style={{ display: "block", marginBottom: 4, fontSize: 12 }}>Library Uploads</Text>
+                      <Switch
+                        checked={settings.allowChooseFromLibrary}
+                        onChange={(checked) => setSettings((s) => ({ ...s, allowChooseFromLibrary: checked }))}
+                      />
+                    </div>
+                    <div>
+                      <Text type="secondary" style={{ display: "block", marginBottom: 4, fontSize: 12 }}>Video</Text>
+                      <Switch
+                        checked={settings.allowVideo}
+                        onChange={(checked) => setSettings((s) => ({ ...s, allowVideo: checked }))}
+                      />
+                    </div>
+                    <div>
+                      <Text type="secondary" style={{ display: "block", marginBottom: 4, fontSize: 12 }}>Captions</Text>
+                      <Switch
+                        checked={settings.allowCaptions}
+                        onChange={(checked) => setSettings((s) => ({ ...s, allowCaptions: checked }))}
+                      />
+                    </div>
+                  </Space>
+
+                  {/* Numeric */}
+                  <Space size="large" wrap>
+                    <div>
+                      <Text type="secondary" style={{ display: "block", marginBottom: 4, fontSize: 12 }}>Max Per Post</Text>
+                      <InputNumber
+                        min={1}
+                        max={20}
+                        value={settings.maxPhotosPerPost}
+                        onChange={(val) => setSettings((s) => ({ ...s, maxPhotosPerPost: val ?? 10 }))}
+                      />
+                    </div>
+                    <div style={{ minWidth: 160 }}>
+                      <Text type="secondary" style={{ display: "block", marginBottom: 4, fontSize: 12 }}>
+                        Slideshow: {settings.slideShowSpeed}s
+                      </Text>
+                      <Slider
+                        min={1}
+                        max={10}
+                        step={0.5}
+                        value={settings.slideShowSpeed}
+                        onChange={(val) => setSettings((s) => ({ ...s, slideShowSpeed: val }))}
+                      />
+                    </div>
+                  </Space>
+                </Space>
+              ),
+            },
+          ]}
+        />
+
         <Button
           type="primary"
           size="large"

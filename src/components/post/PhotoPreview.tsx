@@ -2,7 +2,10 @@
 
 import { useState, useMemo } from "react";
 import { Button, Input, Space, Typography, Image as AntImage } from "antd";
-import { SendOutlined, ArrowLeftOutlined } from "@ant-design/icons";
+import { SendOutlined, ArrowLeftOutlined, PlayCircleFilled } from "@ant-design/icons";
+
+import { getMediaType } from "@/lib/media";
+import type { EventTheme } from "@/types";
 
 const { Text } = Typography;
 
@@ -13,6 +16,8 @@ interface PhotoPreviewProps {
   loading: boolean;
   onSubmit: (caption: string) => void;
   onBack: () => void;
+  allowCaptions: boolean;
+  theme: EventTheme;
 }
 
 /**
@@ -24,6 +29,8 @@ export function PhotoPreview({
   loading,
   onSubmit,
   onBack,
+  allowCaptions,
+  theme,
 }: PhotoPreviewProps): React.ReactElement {
   const [caption, setCaption] = useState("");
 
@@ -63,53 +70,99 @@ export function PhotoPreview({
           marginBottom: 24,
         }}
       >
-        {previews.map((src, index) => (
-          <div
-            key={index}
-            style={{
-              borderRadius: 12,
-              overflow: "hidden",
-              aspectRatio: "1",
-            }}
-          >
-            <AntImage
-              src={src}
-              alt={`Photo ${index + 1}`}
+        {previews.map((src, index) => {
+          const isVideo = getMediaType(files[index]) === "video";
+          return (
+            <div
+              key={index}
               style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
+                borderRadius: 12,
+                overflow: "hidden",
+                aspectRatio: "1",
+                position: "relative",
               }}
-              preview={false}
-            />
-          </div>
-        ))}
+            >
+              {isVideo ? (
+                <video
+                  src={src}
+                  muted
+                  autoPlay
+                  loop
+                  playsInline
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
+                />
+              ) : (
+                <AntImage
+                  src={src}
+                  alt={`Photo ${index + 1}`}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
+                  preview={false}
+                />
+              )}
+              {isVideo && (
+                <PlayCircleFilled
+                  style={{
+                    position: "absolute",
+                    top: 8,
+                    left: 8,
+                    fontSize: 24,
+                    color: "rgba(255,255,255,0.85)",
+                    filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.5))",
+                  }}
+                />
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <Space direction="vertical" size="middle" style={{ flex: 1 }}>
-        <Input
-          placeholder="Add a caption (optional)"
-          value={caption}
-          onChange={(e) => setCaption(e.target.value)}
-          maxLength={CAPTION_MAX_LENGTH}
-          showCount
-          size="large"
-          disabled={loading}
-        />
+        {allowCaptions && (
+          <Input
+            placeholder="Add a caption (optional)"
+            value={caption}
+            onChange={(e) => setCaption(e.target.value)}
+            maxLength={CAPTION_MAX_LENGTH}
+            showCount
+            size="large"
+            disabled={loading}
+          />
+        )}
 
         <Text type="secondary" style={{ fontSize: 12 }}>
-          {files.length} photo{files.length > 1 ? "s" : ""} ready to share
+          {(() => {
+            const imageCount = files.filter((f) => getMediaType(f) === "image").length;
+            const videoCount = files.filter((f) => getMediaType(f) === "video").length;
+            const parts: string[] = [];
+            if (imageCount > 0) parts.push(`${imageCount} photo${imageCount > 1 ? "s" : ""}`);
+            if (videoCount > 0) parts.push(`${videoCount} video${videoCount > 1 ? "s" : ""}`);
+            return `${parts.join(", ")} ready to share`;
+          })()}
         </Text>
       </Space>
 
       <Button
-        type="primary"
         size="large"
         icon={<SendOutlined />}
         block
         loading={loading}
         onClick={handleSubmit}
-        style={{ height: 56, fontSize: 16, marginTop: 24 }}
+        style={{
+          height: 56,
+          fontSize: 16,
+          marginTop: 24,
+          backgroundColor: theme.buttonColor,
+          borderColor: theme.buttonColor,
+          color: "#fff",
+        }}
       >
         Post
       </Button>

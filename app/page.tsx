@@ -24,7 +24,7 @@ export default function HomePage(): React.ReactElement {
         level={1}
         style={{ textAlign: "center", marginBottom: 48, color: "#fafafa" }}
       >
-        Crispy Waffle
+        TinyWall
       </Title>
       <CreateEventForm />
     </main>

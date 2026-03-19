@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { PostFlow } from "@/components/post/PostFlow";
+import { DEFAULT_EVENT_SETTINGS } from "@/types";
+import type { EventSettings } from "@/types";
 
 interface PostPageProps {
   params: { slug: string };
@@ -21,11 +23,22 @@ export default async function PostPage({
     notFound();
   }
 
+  const stored = (event.settings && typeof event.settings === "object" ? event.settings : {}) as Partial<EventSettings>;
+  const settings: EventSettings = {
+    ...DEFAULT_EVENT_SETTINGS,
+    ...stored,
+    theme: {
+      ...DEFAULT_EVENT_SETTINGS.theme,
+      ...(stored.theme ?? {}),
+    },
+  };
+
   return (
     <PostFlow
       eventId={event.id}
       eventName={event.name}
       eventSlug={event.slug}
+      settings={settings}
     />
   );
 }

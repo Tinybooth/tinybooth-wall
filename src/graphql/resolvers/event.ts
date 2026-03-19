@@ -1,5 +1,24 @@
+import { del } from "@vercel/blob";
 import { generateSlug } from "@/lib/utils";
+import { DEFAULT_EVENT_SETTINGS } from "@/types";
 import type { GraphQLContext } from "../context";
+import type { EventSettings } from "@/types";
+
+/**
+ * Merge stored settings (potentially partial/outdated) with defaults.
+ * Ensures new settings fields always have a value for existing events.
+ */
+function mergeSettings(stored: unknown): EventSettings {
+  const partial = (stored && typeof stored === "object" ? stored : {}) as Partial<EventSettings>;
+  return {
+    ...DEFAULT_EVENT_SETTINGS,
+    ...partial,
+    theme: {
+      ...DEFAULT_EVENT_SETTINGS.theme,
+      ...(partial.theme ?? {}),
+    },
+  };
+}
 
 /**
  * Resolvers for Event queries and mutations.
@@ -64,6 +83,17 @@ export const eventResolvers = {
         include: { posts: { include: { photos: true } } },
       });
     },
+    adminUpdateEventSettings: async (
+      _parent: unknown,
+      args: { id: string; settings: EventSettings },
+      context: GraphQLContext
+    ) => {
+      return context.db.event.update({
+        where: { id: args.id },
+        data: { settings: JSON.parse(JSON.stringify(args.settings)) },
+        include: { posts: { include: { photos: true } } },
+      });
+    },
     adminDeleteEvent: async (
       _parent: unknown,
       args: { id: string },
@@ -74,6 +104,13 @@ export const eventResolvers = {
         include: { posts: { include: { photos: true } } },
       });
 
+      // Delete blob assets
+      const blobUrls = event?.posts.flatMap((p) => p.photos.map((ph) => ph.url)) ?? [];
+      if (blobUrls.length > 0) {
+        await del(blobUrls);
+      }
+
+      // Delete DB records
       const postIds = event?.posts.map((p) => p.id) ?? [];
       await context.db.photo.deleteMany({ where: { postId: { in: postIds } } });
       await context.db.post.deleteMany({ where: { eventId: args.id } });
@@ -84,6 +121,11 @@ export const eventResolvers = {
   },
 
   Event: {
+    settings: (
+      parent: { settings?: unknown },
+    ): EventSettings => {
+      return mergeSettings(parent.settings);
+    },
     posts: async (
       parent: { id: string },
       _args: unknown,

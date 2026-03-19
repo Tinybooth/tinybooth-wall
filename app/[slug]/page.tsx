@@ -2,7 +2,8 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { PhotoGrid } from "@/components/tv/PhotoGrid";
 import { getTimeWindowCutoff } from "@/lib/utils";
-import type { Post, Photo } from "@/types";
+import { DEFAULT_EVENT_SETTINGS } from "@/types";
+import type { Post, Photo, EventSettings } from "@/types";
 
 interface TVPageProps {
   params: { slug: string };
@@ -46,6 +47,7 @@ export default async function TVPage({
       (ph): Photo => ({
         id: ph.id,
         url: ph.url,
+        mediaType: (ph.mediaType as Photo["mediaType"]) ?? "image",
         width: ph.width,
         height: ph.height,
         order: ph.order,
@@ -54,12 +56,23 @@ export default async function TVPage({
     ),
   }));
 
+  const stored = (event.settings && typeof event.settings === "object" ? event.settings : {}) as Partial<EventSettings>;
+  const settings: EventSettings = {
+    ...DEFAULT_EVENT_SETTINGS,
+    ...stored,
+    theme: {
+      ...DEFAULT_EVENT_SETTINGS.theme,
+      ...(stored.theme ?? {}),
+    },
+  };
+
   return (
     <PhotoGrid
       eventId={event.id}
       eventName={event.name}
       eventSlug={event.slug}
       initialPosts={posts}
+      settings={settings}
     />
   );
 }

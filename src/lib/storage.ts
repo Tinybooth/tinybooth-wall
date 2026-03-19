@@ -1,11 +1,14 @@
 import { put } from "@vercel/blob";
 import sharp from "sharp";
 
+import type { MediaType } from "@/types";
+
 const MAX_WIDTH = 1920;
 const THUMB_WIDTH = 400;
 
 export interface SavedPhoto {
   url: string;
+  mediaType: MediaType;
   width: number;
   height: number;
 }
@@ -43,6 +46,7 @@ export async function savePhotos(
 
     results.push({
       url: blob.url,
+      mediaType: "image" as const,
       width: metadata.width ?? 0,
       height: metadata.height ?? 0,
     });

@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { Typography, Modal } from "antd";
-import { CloseOutlined, LeftOutlined, RightOutlined } from "@ant-design/icons";
+import { CloseOutlined, LeftOutlined, RightOutlined, PlayCircleFilled } from "@ant-design/icons";
 import Image from "next/image";
 
 import type { Post } from "@/types";
@@ -39,6 +39,22 @@ function Polaroid({
   const rand = seededRandom(post.id);
   const rotation = (rand - 0.5) * 8; // -4 to +4 degrees
 
+  // Compute aspect ratio from the widest (shortest) asset so the
+  // polaroid is at least as tall as the shortest item in a mixed post.
+  const ratios = post.photos
+    .filter((p) => p.width > 0 && p.height > 0)
+    .map((p) => p.width / p.height);
+  // Most landscape ratio = largest value = shortest visual height
+  const maxRatio = ratios.length > 0 ? Math.max(...ratios) : undefined;
+  const hasVideo = post.photos.some((p) => p.mediaType === "video");
+  // If we have dimension data, use the widest ratio; for video-only posts
+  // with no dimensions, let the video size naturally
+  const containerAspectRatio = maxRatio
+    ? `${maxRatio}`
+    : hasVideo
+      ? undefined
+      : "1";
+
   return (
     <div
       onClick={onClick}
@@ -65,14 +81,45 @@ function Polaroid({
         e.currentTarget.style.zIndex = "1";
       }}
     >
-      <div style={{ position: "relative", aspectRatio: "1", background: "#eee" }}>
-        <Image
-          src={post.photos[0].url}
-          alt={post.caption || "Event photo"}
-          fill
-          sizes="300px"
-          style={{ objectFit: "cover", objectPosition: "center" }}
-        />
+      <div style={{ position: "relative", aspectRatio: containerAspectRatio, background: "#eee" }}>
+        {post.photos[0].mediaType === "video" ? (
+          <video
+            src={post.photos[0].url}
+            muted
+            autoPlay
+            loop
+            playsInline
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              objectPosition: "center",
+            }}
+          />
+        ) : (
+          <Image
+            src={post.photos[0].url}
+            alt={post.caption || "Event photo"}
+            fill
+            sizes="300px"
+            style={{ objectFit: "cover", objectPosition: "center" }}
+          />
+        )}
+        {post.photos[0].mediaType === "video" && (
+          <PlayCircleFilled
+            style={{
+              position: "absolute",
+              bottom: 8,
+              left: 8,
+              fontSize: 24,
+              color: "rgba(255,255,255,0.85)",
+              filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.5))",
+              zIndex: 1,
+            }}
+          />
+        )}
         {post.photos.length > 1 && (
           <div
             style={{
@@ -144,13 +191,31 @@ function Lightbox({
       }}
     >
       <div style={{ position: "relative", width: "100%", aspectRatio: "4/3" }}>
-        <Image
-          src={photo.url}
-          alt={post.caption || "Event photo"}
-          fill
-          sizes="90vw"
-          style={{ objectFit: "contain" }}
-        />
+        {photo.mediaType === "video" ? (
+          <video
+            src={photo.url}
+            muted
+            autoPlay
+            loop
+            playsInline
+            controls
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "contain",
+            }}
+          />
+        ) : (
+          <Image
+            src={photo.url}
+            alt={post.caption || "Event photo"}
+            fill
+            sizes="90vw"
+            style={{ objectFit: "contain" }}
+          />
+        )}
 
         {hasMultiple && (
           <>

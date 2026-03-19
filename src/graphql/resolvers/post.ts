@@ -1,3 +1,4 @@
+import { del } from "@vercel/blob";
 import { sanitizeCaption, cleanProfanity } from "@/lib/utils";
 import type { GraphQLContext } from "../context";
 
@@ -34,7 +35,7 @@ export const postResolvers = {
       args: {
         eventId: string;
         caption?: string;
-        photos: { url: string; width: number; height: number }[];
+        photos: { url: string; mediaType: string; width: number; height: number }[];
       },
       context: GraphQLContext
     ) => {
@@ -49,6 +50,7 @@ export const postResolvers = {
           photos: {
             create: args.photos.map((photo, index) => ({
               url: photo.url,
+              mediaType: photo.mediaType,
               width: photo.width,
               height: photo.height,
               order: index,
@@ -82,6 +84,12 @@ export const postResolvers = {
         where: { id: args.id },
         include: { photos: true },
       });
+
+      // Delete blob assets
+      const blobUrls = post?.photos.map((ph) => ph.url) ?? [];
+      if (blobUrls.length > 0) {
+        await del(blobUrls);
+      }
 
       await context.db.photo.deleteMany({ where: { postId: args.id } });
       await context.db.post.delete({ where: { id: args.id } });

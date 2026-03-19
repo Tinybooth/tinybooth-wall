@@ -3,7 +3,7 @@ import { Providers } from "@/components/Providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Crispy Waffle - Event Photo Wall",
+  title: "TinyWall - Event Photo Wall",
   description: "Share photos live at your event",
 };
 

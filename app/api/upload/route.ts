@@ -39,7 +39,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const photos = await savePhotos(files, eventSlug);
 
-    return NextResponse.json({ photos });
+    return NextResponse.json({
+      photos: photos.map((p) => ({
+        url: p.url,
+        mediaType: p.mediaType,
+        width: p.width,
+        height: p.height,
+      })),
+    });
   } catch (error) {
     console.error("Upload error:", error);
     return NextResponse.json(

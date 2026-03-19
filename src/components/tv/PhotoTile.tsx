@@ -7,6 +7,7 @@ import type { Post } from "@/types";
 
 interface PhotoTileProps {
   post: Post;
+  slideShowSpeed: number;
 }
 
 /**
@@ -15,7 +16,10 @@ interface PhotoTileProps {
  */
 function getSpanClass(post: Post): string {
   const photo = post.photos[0];
-  if (!photo?.width || !photo?.height) return "";
+  if (!photo?.width || !photo?.height) {
+    // Videos with no dimensions default to 1x1 cell
+    return "";
+  }
 
   const ratio = photo.width / photo.height;
   if (ratio > 1.3) return "span-2-col";
@@ -28,7 +32,7 @@ function getSpanClass(post: Post): string {
  * Crops to fill the cell, keeping the center of the image visible.
  * For multi-photo posts, crossfades between photos.
  */
-export function PhotoTile({ post }: PhotoTileProps): React.ReactElement {
+export function PhotoTile({ post, slideShowSpeed }: PhotoTileProps): React.ReactElement {
   const [activeIndex, setActiveIndex] = useState(0);
   const hasMultiplePhotos = post.photos.length > 1;
   const spanClass = getSpanClass(post);
@@ -38,28 +42,49 @@ export function PhotoTile({ post }: PhotoTileProps): React.ReactElement {
 
     const interval = setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % post.photos.length);
-    }, 3500);
+    }, slideShowSpeed * 1000);
 
     return () => clearInterval(interval);
-  }, [hasMultiplePhotos, post.photos.length]);
+  }, [hasMultiplePhotos, post.photos.length, slideShowSpeed]);
 
   return (
     <div className={`photo-tile photo-tile-enter ${spanClass}`}>
-      {post.photos.map((photo, index) => (
-        <Image
-          key={photo.id}
-          src={photo.url}
-          alt={post.caption || "Event photo"}
-          fill
-          sizes="(min-width: 1200px) 25vw, 33vw"
-          style={{
-            objectFit: "cover",
-            objectPosition: "center center",
-            opacity: index === activeIndex ? 1 : 0,
-            transition: "opacity 0.8s ease-in-out",
-          }}
-        />
-      ))}
+      {post.photos.map((photo, index) =>
+        photo.mediaType === "video" ? (
+          <video
+            key={photo.id}
+            src={photo.url}
+            muted
+            autoPlay
+            loop
+            playsInline
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              objectPosition: "center center",
+              opacity: index === activeIndex ? 1 : 0,
+              transition: "opacity 0.8s ease-in-out",
+            }}
+          />
+        ) : (
+          <Image
+            key={photo.id}
+            src={photo.url}
+            alt={post.caption || "Event photo"}
+            fill
+            sizes="(min-width: 1200px) 25vw, 33vw"
+            style={{
+              objectFit: "cover",
+              objectPosition: "center center",
+              opacity: index === activeIndex ? 1 : 0,
+              transition: "opacity 0.8s ease-in-out",
+            }}
+          />
+        )
+      )}
 
       {post.caption && (
         <div

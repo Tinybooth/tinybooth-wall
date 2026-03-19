@@ -1,9 +1,44 @@
 scalar DateTime
 
+type EventTheme {
+  buttonColor: String!
+  secondaryButtonColor: String!
+  textColor: String!
+  subtextColor: String!
+  backgroundColor: String!
+}
+
+type EventSettings {
+  theme: EventTheme!
+  allowChooseFromLibrary: Boolean!
+  allowVideo: Boolean!
+  allowCaptions: Boolean!
+  maxPhotosPerPost: Int!
+  slideShowSpeed: Float!
+}
+
+input EventThemeInput {
+  buttonColor: String!
+  secondaryButtonColor: String!
+  textColor: String!
+  subtextColor: String!
+  backgroundColor: String!
+}
+
+input EventSettingsInput {
+  theme: EventThemeInput!
+  allowChooseFromLibrary: Boolean!
+  allowVideo: Boolean!
+  allowCaptions: Boolean!
+  maxPhotosPerPost: Int!
+  slideShowSpeed: Float!
+}
+
 type Event {
   id: ID!
   name: String!
   slug: String!
+  settings: EventSettings!
   dateCreated: DateTime!
   posts: [Post!]!
 }
@@ -19,6 +54,7 @@ type Post {
 type Photo {
   id: ID!
   url: String!
+  mediaType: String!
   width: Int!
   height: Int!
   order: Int!
@@ -27,6 +63,7 @@ type Photo {
 
 input PhotoInput {
   url: String!
+  mediaType: String!
   width: Int!
   height: Int!
 }
@@ -42,6 +79,7 @@ type Mutation {
   createEvent(name: String!): Event!
   createPost(eventId: ID!, caption: String, photos: [PhotoInput!]!): Post!
   adminUpdateEvent(id: ID!, name: String!): Event!
+  adminUpdateEventSettings(id: ID!, settings: EventSettingsInput!): Event!
   adminDeleteEvent(id: ID!): Event!
   adminUpdatePost(id: ID!, caption: String): Post!
   adminDeletePost(id: ID!): Post!

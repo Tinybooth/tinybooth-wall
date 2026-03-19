@@ -8,10 +8,14 @@ import {
   Space,
   Card,
   Input,
+  InputNumber,
   Table,
   Image,
   Modal,
   Tag,
+  Switch,
+  ColorPicker,
+  Slider,
   message,
 } from "antd";
 import {
@@ -22,7 +26,8 @@ import {
   ExclamationCircleOutlined,
 } from "@ant-design/icons";
 
-import type { Event, Post, Photo } from "@/types";
+import { DEFAULT_EVENT_SETTINGS } from "@/types";
+import type { Event, Post, Photo, EventSettings } from "@/types";
 import type { ColumnsType } from "antd/es/table";
 
 const { Title, Text } = Typography;
@@ -46,6 +51,20 @@ async function fetchEvent(id: string): Promise<Event | null> {
             id
             name
             slug
+            settings {
+              theme {
+                buttonColor
+                secondaryButtonColor
+                textColor
+                subtextColor
+                backgroundColor
+              }
+              allowChooseFromLibrary
+              allowVideo
+              allowCaptions
+              maxPhotosPerPost
+              slideShowSpeed
+            }
             dateCreated
             posts {
               id
@@ -54,6 +73,7 @@ async function fetchEvent(id: string): Promise<Event | null> {
               photos {
                 id
                 url
+                mediaType
                 width
                 height
                 order
@@ -87,6 +107,20 @@ async function updateEventName(id: string, name: string): Promise<Event> {
             id
             name
             slug
+            settings {
+              theme {
+                buttonColor
+                secondaryButtonColor
+                textColor
+                subtextColor
+                backgroundColor
+              }
+              allowChooseFromLibrary
+              allowVideo
+              allowCaptions
+              maxPhotosPerPost
+              slideShowSpeed
+            }
             dateCreated
             posts {
               id
@@ -95,6 +129,7 @@ async function updateEventName(id: string, name: string): Promise<Event> {
               photos {
                 id
                 url
+                mediaType
                 width
                 height
                 order
@@ -112,6 +147,62 @@ async function updateEventName(id: string, name: string): Promise<Event> {
     throw new Error(result.errors[0].message);
   }
   return result.data.adminUpdateEvent;
+}
+
+/**
+ * Updates event settings via the admin GraphQL endpoint.
+ */
+async function updateEventSettings(id: string, settings: EventSettings): Promise<Event> {
+  const response = await fetch("/api/graphql", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      query: `
+        mutation AdminUpdateEventSettings($id: ID!, $settings: EventSettingsInput!) {
+          adminUpdateEventSettings(id: $id, settings: $settings) {
+            id
+            name
+            slug
+            settings {
+              theme {
+                buttonColor
+                secondaryButtonColor
+                textColor
+                subtextColor
+                backgroundColor
+              }
+              allowChooseFromLibrary
+              allowVideo
+              allowCaptions
+              maxPhotosPerPost
+              slideShowSpeed
+            }
+            dateCreated
+            posts {
+              id
+              caption
+              dateCreated
+              photos {
+                id
+                url
+                mediaType
+                width
+                height
+                order
+              }
+            }
+          }
+        }
+      `,
+      variables: { id, settings },
+    }),
+  });
+
+  const result = await response.json();
+  if (result.errors) {
+    throw new Error(result.errors[0].message);
+  }
+  return result.data.adminUpdateEventSettings;
 }
 
 /**
@@ -176,6 +267,8 @@ export function AdminEventDetail({ eventId }: AdminEventDetailProps): React.Reac
   const [savingName, setSavingName] = useState(false);
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [captionValue, setCaptionValue] = useState("");
+  const [settingsValue, setSettingsValue] = useState<EventSettings>(DEFAULT_EVENT_SETTINGS);
+  const [savingSettings, setSavingSettings] = useState(false);
 
   const loadEvent = useCallback(async (): Promise<void> => {
     setLoading(true);
@@ -184,6 +277,7 @@ export function AdminEventDetail({ eventId }: AdminEventDetailProps): React.Reac
       setEvent(data);
       if (data) {
         setNameValue(data.name);
+        setSettingsValue(data.settings ?? DEFAULT_EVENT_SETTINGS);
       }
     } catch (error) {
       console.error("Failed to fetch event:", error);
@@ -213,6 +307,21 @@ export function AdminEventDetail({ eventId }: AdminEventDetailProps): React.Reac
       setSavingName(false);
     }
   }, [event, nameValue]);
+
+  const handleSaveSettings = useCallback(async (): Promise<void> => {
+    if (!event) return;
+    setSavingSettings(true);
+    try {
+      const updated = await updateEventSettings(event.id, settingsValue);
+      setEvent(updated);
+      message.success("Settings saved");
+    } catch (error) {
+      console.error("Failed to save settings:", error);
+      message.error("Failed to save settings");
+    } finally {
+      setSavingSettings(false);
+    }
+  }, [event, settingsValue]);
 
   const handleEditCaption = useCallback((post: Post): void => {
     setEditingPostId(post.id);
@@ -286,16 +395,27 @@ export function AdminEventDetail({ eventId }: AdminEventDetailProps): React.Reac
       render: (_: unknown, record: Post) => (
         <Image.PreviewGroup>
           <Space size={4} wrap>
-            {record.photos.map((photo: Photo) => (
-              <Image
-                key={photo.id}
-                src={photo.url}
-                alt=""
-                width={48}
-                height={48}
-                style={{ objectFit: "cover", borderRadius: 4 }}
-              />
-            ))}
+            {record.photos.map((photo: Photo) =>
+              photo.mediaType === "video" ? (
+                <video
+                  key={photo.id}
+                  src={photo.url}
+                  muted
+                  width={48}
+                  height={48}
+                  style={{ objectFit: "cover", borderRadius: 4 }}
+                />
+              ) : (
+                <Image
+                  key={photo.id}
+                  src={photo.url}
+                  alt=""
+                  width={48}
+                  height={48}
+                  style={{ objectFit: "cover", borderRadius: 4 }}
+                />
+              )
+            )}
           </Space>
         </Image.PreviewGroup>
       ),
@@ -457,6 +577,128 @@ export function AdminEventDetail({ eventId }: AdminEventDetailProps): React.Reac
               <Text>{new Date(event.dateCreated).toLocaleDateString()}</Text>
             </div>
           </Space>
+        </Space>
+      </Card>
+
+      <Card
+        title="Event Settings"
+        style={{
+          background: "#141414",
+          border: "1px solid #303030",
+          marginBottom: 24,
+        }}
+      >
+        <Space direction="vertical" size="large" style={{ width: "100%" }}>
+          {/* Theme */}
+          <div>
+            <Text strong style={{ display: "block", marginBottom: 12 }}>Theme</Text>
+            <Space size="large" wrap>
+              <div>
+                <Text type="secondary" style={{ display: "block", marginBottom: 4 }}>Button</Text>
+                <ColorPicker
+                  value={settingsValue.theme.buttonColor}
+                  onChange={(_, hex) =>
+                    setSettingsValue((s) => ({ ...s, theme: { ...s.theme, buttonColor: hex } }))
+                  }
+                />
+              </div>
+              <div>
+                <Text type="secondary" style={{ display: "block", marginBottom: 4 }}>Secondary Button</Text>
+                <ColorPicker
+                  value={settingsValue.theme.secondaryButtonColor}
+                  onChange={(_, hex) =>
+                    setSettingsValue((s) => ({ ...s, theme: { ...s.theme, secondaryButtonColor: hex } }))
+                  }
+                />
+              </div>
+              <div>
+                <Text type="secondary" style={{ display: "block", marginBottom: 4 }}>Text</Text>
+                <ColorPicker
+                  value={settingsValue.theme.textColor}
+                  onChange={(_, hex) =>
+                    setSettingsValue((s) => ({ ...s, theme: { ...s.theme, textColor: hex } }))
+                  }
+                />
+              </div>
+              <div>
+                <Text type="secondary" style={{ display: "block", marginBottom: 4 }}>Subtext</Text>
+                <ColorPicker
+                  value={settingsValue.theme.subtextColor}
+                  onChange={(_, hex) =>
+                    setSettingsValue((s) => ({ ...s, theme: { ...s.theme, subtextColor: hex } }))
+                  }
+                />
+              </div>
+              <div>
+                <Text type="secondary" style={{ display: "block", marginBottom: 4 }}>Background</Text>
+                <ColorPicker
+                  value={settingsValue.theme.backgroundColor}
+                  onChange={(_, hex) =>
+                    setSettingsValue((s) => ({ ...s, theme: { ...s.theme, backgroundColor: hex } }))
+                  }
+                />
+              </div>
+            </Space>
+          </div>
+
+          {/* Toggles */}
+          <Space size="large" wrap>
+            <div>
+              <Text type="secondary" style={{ display: "block", marginBottom: 4 }}>Allow Library Uploads</Text>
+              <Switch
+                checked={settingsValue.allowChooseFromLibrary}
+                onChange={(checked) => setSettingsValue((s) => ({ ...s, allowChooseFromLibrary: checked }))}
+              />
+            </div>
+            <div>
+              <Text type="secondary" style={{ display: "block", marginBottom: 4 }}>Allow Video</Text>
+              <Switch
+                checked={settingsValue.allowVideo}
+                onChange={(checked) => setSettingsValue((s) => ({ ...s, allowVideo: checked }))}
+              />
+            </div>
+            <div>
+              <Text type="secondary" style={{ display: "block", marginBottom: 4 }}>Allow Captions</Text>
+              <Switch
+                checked={settingsValue.allowCaptions}
+                onChange={(checked) => setSettingsValue((s) => ({ ...s, allowCaptions: checked }))}
+              />
+            </div>
+          </Space>
+
+          {/* Numeric settings */}
+          <Space size="large" wrap>
+            <div>
+              <Text type="secondary" style={{ display: "block", marginBottom: 4 }}>Max Photos Per Post</Text>
+              <InputNumber
+                min={1}
+                max={20}
+                value={settingsValue.maxPhotosPerPost}
+                onChange={(val) => setSettingsValue((s) => ({ ...s, maxPhotosPerPost: val ?? 10 }))}
+              />
+            </div>
+            <div style={{ minWidth: 200 }}>
+              <Text type="secondary" style={{ display: "block", marginBottom: 4 }}>
+                Slideshow Speed: {settingsValue.slideShowSpeed}s
+              </Text>
+              <Slider
+                min={1}
+                max={10}
+                step={0.5}
+                value={settingsValue.slideShowSpeed}
+                onChange={(val) => setSettingsValue((s) => ({ ...s, slideShowSpeed: val }))}
+              />
+            </div>
+          </Space>
+
+          <Button
+            type="primary"
+            icon={<SaveOutlined />}
+            loading={savingSettings}
+            onClick={handleSaveSettings}
+          >
+            Save Settings
+          </Button>
         </Space>
       </Card>
 

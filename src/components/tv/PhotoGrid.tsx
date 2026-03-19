@@ -7,7 +7,7 @@ import { PhotoTile } from "./PhotoTile";
 import { QROverlay } from "./QROverlay";
 import { usePolling } from "@/hooks/usePolling";
 import { getTimeWindowCutoff } from "@/lib/utils";
-import type { Post } from "@/types";
+import type { Post, EventSettings } from "@/types";
 
 const { Title, Text } = Typography;
 
@@ -18,6 +18,7 @@ interface PhotoGridProps {
   eventName: string;
   eventSlug: string;
   initialPosts: Post[];
+  settings: EventSettings;
 }
 
 /**
@@ -26,7 +27,7 @@ interface PhotoGridProps {
 function calcGrid(width: number, height: number): { cols: number; rows: number } {
   const cellSize = 280;
   const cols = Math.max(1, Math.round(width / cellSize));
-  const rows = Math.max(1, Math.round(height / cellSize));
+  const rows = Math.max(1, Math.round(height / cellSize)) + 3;
   return { cols, rows };
 }
 
@@ -40,6 +41,7 @@ export function PhotoGrid({
   eventName,
   eventSlug,
   initialPosts,
+  settings,
 }: PhotoGridProps): React.ReactElement {
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [grid, setGrid] = useState({ cols: 4, rows: 3 });
@@ -112,6 +114,7 @@ export function PhotoGrid({
                 photos {
                   id
                   url
+                  mediaType
                   width
                   height
                   order
@@ -150,11 +153,11 @@ export function PhotoGrid({
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: "#0a0a0a",
+          background: settings.theme.backgroundColor,
           gap: 16,
         }}
       >
-        <Title level={2} style={{ color: "#fafafa", margin: 0 }}>
+        <Title level={2} style={{ color: settings.theme.textColor, margin: 0 }}>
           {eventName}
         </Title>
         <Text style={{ color: "#888", fontSize: 18 }}>
@@ -166,7 +169,7 @@ export function PhotoGrid({
   }
 
   return (
-    <div style={{ background: "#0a0a0a" }}>
+    <div style={{ background: settings.theme.backgroundColor }}>
       <div
         className="tv-grid"
         style={{
@@ -175,7 +178,7 @@ export function PhotoGrid({
         }}
       >
         {visiblePosts.map((post) => (
-          <PhotoTile key={post.id} post={post} />
+          <PhotoTile key={post.id} post={post} slideShowSpeed={settings.slideShowSpeed} />
         ))}
       </div>
       <QROverlay postUrl={postUrl} />

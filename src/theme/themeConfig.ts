@@ -3,14 +3,12 @@ import { theme } from "antd";
 
 /**
  * Ant Design dark theme configuration for the event photo wall.
- * Colors pulled from marloncaytlynn.framer.website — forest green + deep red.
+ * Per-event theming is handled via EventSettings — this is the base app theme.
  */
 export const themeConfig: ThemeConfig = {
   algorithm: theme.darkAlgorithm,
   token: {
-    colorPrimary: "#922B21",
-    colorSuccess: "#126849",
-    colorError: "#922B21",
+    colorPrimary: "#7c3aed",
     colorBgBase: "#0a0a0a",
     colorBgContainer: "#141414",
     colorBgElevated: "#1f1f1f",
@@ -20,7 +18,7 @@ export const themeConfig: ThemeConfig = {
   },
   components: {
     Button: {
-      colorPrimary: "#922B21",
+      colorPrimary: "#7c3aed",
       algorithm: true,
     },
     Input: {

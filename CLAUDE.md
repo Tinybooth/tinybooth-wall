@@ -1,4 +1,4 @@
-# Crispy Waffle - Event Photo Wall
+# TinyWall - Event Photo Wall
 
 A real-time event photo sharing web app. Guests at an event (wedding, party, etc.) scan a QR code, take or upload photos from their phone, and see them appear live on a TV display as a dynamic photo collage.
 

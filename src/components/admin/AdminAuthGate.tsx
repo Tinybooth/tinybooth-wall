@@ -8,7 +8,7 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 const { Title, Text } = Typography;
 
 const ADMIN_PASSWORD = "deezNUTSZ!420";
-const AUTH_STORAGE_KEY = "crispy-waffle-admin-auth";
+const AUTH_STORAGE_KEY = "tinybooth-wall-admin-auth";
 
 interface AdminAuthGateProps {
   children: React.ReactNode;

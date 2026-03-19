@@ -35,6 +35,7 @@ export default async function PostsPage({
       (ph): Photo => ({
         id: ph.id,
         url: ph.url,
+        mediaType: (ph.mediaType as Photo["mediaType"]) ?? "image",
         width: ph.width,
         height: ph.height,
         order: ph.order,
