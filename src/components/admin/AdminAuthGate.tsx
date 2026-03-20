@@ -7,6 +7,7 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 const { Title, Text } = Typography;
 
+// hi
 const ADMIN_PASSWORD = "deezNUTSZ!420";
 const AUTH_STORAGE_KEY = "tinybooth-wall-admin-auth";
 
