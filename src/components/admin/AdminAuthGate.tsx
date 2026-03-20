@@ -7,10 +7,6 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 const { Title, Text } = Typography;
 
-// hi
-const ADMIN_PASSWORD = "deezNUTSZ!420";
-const AUTH_STORAGE_KEY = "tinybooth-wall-admin-auth";
-
 interface AdminAuthGateProps {
   children: React.ReactNode;
 }
@@ -21,12 +17,12 @@ interface AdminAuthGateProps {
  * but clears when the browser tab is closed.
  */
 export function AdminAuthGate({ children }: AdminAuthGateProps): React.ReactElement {
-  const [isAuthenticated, setIsAuthenticated] = useLocalStorage<boolean>(AUTH_STORAGE_KEY, false);
+  const [isAuthenticated, setIsAuthenticated] = useLocalStorage<boolean>(process.env.AUTH_STORAGE_KEY || '', false);
   const [password, setPassword] = useState("");
   const [error, setError] = useState(false);
 
   const handleSubmit = useCallback((): void => {
-    if (password === ADMIN_PASSWORD) {
+    if (password === process.env.ADMIN_PASSWORD) {
       setIsAuthenticated(true);
       setError(false);
     } else {
