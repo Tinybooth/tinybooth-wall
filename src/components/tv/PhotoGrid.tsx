@@ -27,7 +27,7 @@ interface PhotoGridProps {
 function calcGrid(width: number, height: number): { cols: number; rows: number } {
   const cellSize = 280;
   const cols = Math.max(1, Math.round(width / cellSize));
-  const rows = Math.max(1, Math.round(height / cellSize)) + 3;
+  const rows = Math.max(1, Math.round(height / cellSize)) + 1;
   return { cols, rows };
 }
 
