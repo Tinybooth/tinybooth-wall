@@ -14,7 +14,7 @@ interface AdminAuthGateProps {
 /**
  * Client-side password gate for the admin section.
  * Stores auth state in sessionStorage so it persists across page navigations
- * but clears when the browser tab is closed.
+ * but clears when the browser tab is closed. ya know, for security.
  */
 export function AdminAuthGate({ children }: AdminAuthGateProps): React.ReactElement {
   const [isAuthenticated, setIsAuthenticated] = useLocalStorage<boolean>(process.env.AUTH_STORAGE_KEY || '', false);
